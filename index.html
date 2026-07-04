@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUIZZ-CCNA3 · Examen Teórico de la Academia</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --card: #1a1d27;
+  --card-border: #2a2d3a;
+  --text: #e4e4e7;
+  --text-muted: #8b8d97;
+  --accent: #6c5ce7;
+  --accent-glow: rgba(108, 92, 231, 0.15);
+  --correct: #00c853;
+  --correct-bg: rgba(0, 200, 83, 0.08);
+  --correct-border: rgba(0, 200, 83, 0.3);
+  --incorrect: #ff1744;
+  --incorrect-bg: rgba(255, 23, 68, 0.08);
+  --incorrect-border: rgba(255, 23, 68, 0.3);
+  --option-hover: #22253a;
+  --selected: rgba(108, 92, 231, 0.12);
+  --selected-border: rgba(108, 92, 231, 0.5);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.header {
+  background: linear-gradient(135deg, #1a1d27 0%, #252840 100%);
+  border-bottom: 1px solid var(--card-border);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+}
+.header h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.header .subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+.progress-bar-container {
+  max-width: 400px;
+  margin: 0.7rem auto 0;
+  background: var(--card-border);
+  border-radius: 10px;
+  height: 6px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #a29bfe);
+  border-radius: 10px;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+.progress-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+}
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+.question-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.2rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.question-card.answered-correct {
+  border-color: var(--correct-border);
+  box-shadow: 0 0 20px rgba(0, 200, 83, 0.05);
+}
+.question-card.answered-incorrect {
+  border-color: var(--incorrect-border);
+  box-shadow: 0 0 20px rgba(255, 23, 68, 0.05);
+}
+.question-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+.question-type {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  background: var(--accent-glow);
+  border: 1px solid var(--selected-border);
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  margin-left: 0.5rem;
+}
+.question-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+.question-text code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  background: rgba(108, 92, 231, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  color: #a29bfe;
+}
+.options { display: flex; flex-direction: column; gap: 0.5rem; }
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  user-select: none;
+}
+.option:hover:not(.disabled) {
+  background: var(--option-hover);
+  border-color: var(--selected-border);
+}
+.option.selected {
+  background: var(--selected);
+  border-color: var(--selected-border);
+}
+.option.disabled { cursor: default; opacity: 0.6; }
+.option.option-correct {
+  background: var(--correct-bg) !important;
+  border-color: var(--correct-border) !important;
+  opacity: 1 !important;
+}
+.option.option-incorrect {
+  background: var(--incorrect-bg) !important;
+  border-color: var(--incorrect-border) !important;
+  opacity: 1 !important;
+}
+.radio-circle, .check-box {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--card-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  transition: all 0.2s;
+}
+.check-box { border-radius: 4px; }
+.option.selected .radio-circle,
+.option.selected .check-box {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.option.option-correct .radio-circle,
+.option.option-correct .check-box {
+  border-color: var(--correct);
+  background: var(--correct);
+}
+.option.option-incorrect .radio-circle,
+.option.option-incorrect .check-box {
+  border-color: var(--incorrect);
+  background: var(--incorrect);
+}
+.radio-dot, .check-mark {
+  width: 6px; height: 6px;
+  background: white;
+  border-radius: 50%;
+  display: none;
+}
+.check-mark {
+  border-radius: 1px;
+  width: 10px; height: 10px;
+  background: none;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+}
+.option.selected .radio-dot,
+.option.option-correct .radio-dot,
+.option.option-incorrect .radio-dot { display: block; }
+.option.selected .check-mark,
+.option.option-correct .check-mark,
+.option.option-incorrect .check-mark { display: flex; align-items: center; justify-content: center; }
+.feedback {
+  margin-top: 0.8rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+.feedback.show { display: block; }
+.feedback.correct {
+  background: var(--correct-bg);
+  border: 1px solid var(--correct-border);
+  color: var(--correct);
+}
+.feedback.incorrect {
+  background: var(--incorrect-bg);
+  border: 1px solid var(--incorrect-border);
+  color: var(--incorrect);
+}
+.feedback-label {
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.feedback-text {
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+.confirm-btn {
+  margin-top: 0.8rem;
+  padding: 0.5rem 1.2rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: none;
+}
+.confirm-btn:hover { background: #5a4bd4; transform: translateY(-1px); }
+.confirm-btn.show { display: inline-block; }
+
+.results-section {
+  display: none;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: var(--card);
+  border: 2px solid var(--card-border);
+  border-radius: 16px;
+  margin-top: 2rem;
+  animation: fadeIn 0.5s ease;
+}
+.results-section.show { display: block; }
+.results-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 1rem;
+}
+.results-score-big {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.results-score-big.pass { color: var(--correct); }
+.results-score-big.fail { color: var(--incorrect); }
+.results-fraction {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+.results-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-top: 1rem;
+  padding: 0.5rem 2rem;
+  border-radius: 8px;
+  display: inline-block;
+}
+.results-label.pass {
+  color: var(--correct);
+  background: var(--correct-bg);
+  border: 2px solid var(--correct-border);
+}
+.results-label.fail {
+  color: var(--incorrect);
+  background: var(--incorrect-bg);
+  border: 2px solid var(--incorrect-border);
+}
+.results-detail {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+.reset-btn {
+  margin-top: 2rem;
+  padding: 0.9rem 2.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.reset-btn:hover { background: #5a4bd4; transform: translateY(-2px); box-shadow: 0 5px 20px rgba(108, 92, 231, 0.3); }
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+.modal-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+.modal h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+.modal p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+.modal-buttons { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+.modal-btn {
+  padding: 0.7rem 1.8rem;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.modal-btn.confirm { background: var(--incorrect); color: white; }
+.modal-btn.confirm:hover { background: #e01540; }
+.modal-btn.cancel { background: var(--card-border); color: var(--text); }
+.modal-btn.cancel:hover { background: #3a3d4a; }
+
+@media (max-width: 600px) {
+  .header h1 { font-size: 0.95rem; }
+  .header { padding: 1rem 0.8rem; }
+  .question-card { padding: 1.2rem; }
+  .option { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
+  .results-score-big { font-size: 3rem; }
+  .results-label { font-size: 1.3rem; letter-spacing: 0.15em; }
+  .container { padding: 1rem 0.8rem 4rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>QUIZZ-CCNA3</h1>
+  <div class="subtitle">Examen Teórico de la Academia — 25 preguntas</div>
+  <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="progress-text" id="progressText">0 / 25 respondidas</div>
+</div>
+
+<div class="container" id="quizContainer"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <h3>Reiniciar test</h3>
+    <p>Las respuestas actuales se perderán.<br>¿Estás seguro de reiniciar la página?</p>
+    <div class="modal-buttons">
+      <button class="modal-btn confirm" onclick="doReset()">Sí, reiniciar página</button>
+      <button class="modal-btn cancel" onclick="closeModal()">Mejor no</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "¿Cuál es el valor de Dead Interval si el Hello Interval es de 25?",
+    opts: ["125 seg","1 min y 40 seg","100 min","60 min y 40 seg","100 seg"],
+    correct: [4],
+    multi: false,
+    explain: "Dead Interval = 4 × Hello Interval = 4 × 25 = 100 segundos (equivale a 1 min y 40 seg). Es el tiempo que espera OSPF antes de declarar caído a un vecino."
+  },
+  {
+    q: "¿Cuáles son las tres tareas realizadas por los routers que requieren el uso de ACL para identificar el tráfico?",
+    opts: ["Proporcionan control del flujo de tráfico","Filtran a las redes para denegarles el acceso a los servicios de red","Limitan el tráfico de la red para aumentar su rendimiento","Filtran el tráfico según el tipo de tráfico","Proporcionar prioridad a datagramas de capa 2"],
+    correct: [0,2,3],
+    multi: true,
+    multiCount: 3,
+    explain: "Las ACL: controlan el flujo de tráfico, limitan el tráfico para mejorar el rendimiento y filtran según el tipo de tráfico."
+  },
+  {
+    q: "¿Cuál es el comando de interfaz que se utiliza para deshabilitar el proceso de elección DR/BDR?",
+    opts: ["interface point-to-point","ip ospf network point-to-multipoint","ip interface broadcast","ip ospf network point-to-point","ip interface point-to-point"],
+    correct: [3],
+    multi: false,
+    explain: "Con 'ip ospf network point-to-point' la red se trata como punto a punto y no hay elección de DR/BDR."
+  },
+  {
+    q: "Una interfaz de router, de manera específica, ¿cuántas ACL puede tener en total?",
+    opts: ["4","1","3","2","8"],
+    correct: [0],
+    multi: false,
+    explain: "Máximo 4: una ACL entrante y una saliente por cada protocolo (IPv4 in, IPv4 out, IPv6 in, IPv6 out)."
+  },
+  {
+    q: "¿Cuáles son las cuatro técnicas principales utilizadas en los ataques de ingeniería social?",
+    opts: ["Phishing","Desviaciones de puertos","Spam","Pretesting","Baiting"],
+    correct: [0,2,3,4],
+    multi: true,
+    multiCount: 4,
+    explain: "Las cuatro son: Phishing, Spam, Pretexting (aquí 'Pretesting') y Baiting. Desviación de puertos es un ataque de acceso, no de ingeniería social."
+  },
+  {
+    q: "¿Cuáles son las cuatro técnicas usadas por los ataques de acceso?",
+    opts: ["Shoulder surfing","Desviaciones de puertos","Ghosting","Tailgating","Baiting","Ataque de contraseña","Ataque de confianza","Ataques de falsificación"],
+    correct: [1,5,6,7],
+    multi: true,
+    multiCount: 4,
+    explain: "Las cuatro: ataque de contraseña, ataque de confianza (trust exploitation), desviación de puertos (port redirection) y ataque de falsificación (spoofing/MITM)."
+  },
+  {
+    q: "¿Qué tipo de información tiene el estado del vínculo?",
+    opts: ["Prefijo de red, la longitud del prefijo y el costo acumulado","Prefijo de red, la longitud del prefijo y el costo","Prefijo de red, la longitud del prefijo y la métrica","Prefijo de red y la longitud del prefijo"],
+    correct: [2],
+    multi: false,
+    explain: "El estado del vínculo (link-state) contiene: el prefijo de red, la longitud del prefijo y la métrica (costo) del enlace."
+  },
+  {
+    q: "¿Cuál es el comando para verificar que el router haya formado una adyacencia con los routers vecinos?",
+    opts: ["show ip ospf interface","show ip ospf","show ip protocols","show ip ospf neighbor","show ip route"],
+    correct: [3],
+    multi: false,
+    explain: "'show ip ospf neighbor' muestra los vecinos OSPF y el estado de la adyacencia (Full, 2-Way, etc.)."
+  },
+  {
+    q: 'En los ataques de Spoofing (suplantación) "blind" (a ciegas) o "non-blind" (con visibilidad), ¿cuál es la principal diferencia?',
+    opts: ['"non-blind" no puede ver el tráfico','"blind" puede ver el tráfico','"blind" no puede ver el tráfico','"non-blind" puede ver el tráfico'],
+    correct: [2,3],
+    multi: true,
+    multiCount: 2,
+    explain: 'En "blind" (a ciegas) el atacante NO ve el tráfico de respuesta; en "non-blind" (con visibilidad) SÍ puede verlo.'
+  },
+  {
+    q: 'Al no usar el comando "passive-interface", el envío de mensajes innecesarios en una LAN afecta la red de tres maneras. ¿Cuáles son los tres problemas?',
+    opts: ["Menor riesgo de seguridad","Uso eficaz de los recursos","Uso ineficaz del ancho de banda","Mayor riesgo de seguridad","Uso ineficaz de los recursos"],
+    correct: [2,3,4],
+    multi: true,
+    multiCount: 3,
+    explain: "Los tres problemas: uso ineficaz del ancho de banda, uso ineficaz de los recursos y mayor riesgo de seguridad."
+  },
+  {
+    q: "¿Cuál es el intervalo de números de las ACL numeradas estándar?",
+    opts: ["1-99 ó 1300-1999 son ACL extendidas","1-99 ó 1300-1999 son ACL estándar","1-100 ó 1400-1999 son ACL estándar","1-100 ó 1500-1999 son ACL estándar"],
+    correct: [1],
+    multi: false,
+    explain: "Las ACL estándar numeradas usan los rangos 1-99 y 1300-1999. Las extendidas usan 100-199 y 2000-2699."
+  },
+  {
+    q: "La palabra clave host, cuando hablamos de ACL, ¿cuál es la máscara que reemplaza?",
+    opts: ["0.0.0.0.0","0.255.255.255","0.0.0.0","255.255.255.255","Anfitrión"],
+    correct: [2],
+    multi: false,
+    explain: "La palabra clave 'host' reemplaza a la wildcard mask 0.0.0.0, que indica una coincidencia exacta con una única dirección IP."
+  },
+  {
+    q: "¿Cuáles son los principales daños que un virus puede ocasionar? (Marque 3)",
+    opts: ["Capturar y enviar información confidencial a los atacantes","Permanecer inactivo hasta que el atacante lo requiera","Acceder a cuentas de correo","Modificar, dañar, eliminar archivos o borrar discos duros completos","Capturar y enviar información confidencial de los atacantes"],
+    correct: [0,1,3],
+    multi: true,
+    multiCount: 3,
+    explain: "Los tres daños: capturar y enviar info confidencial a los atacantes, permanecer inactivo hasta ser requerido, y modificar/dañar/eliminar archivos o discos."
+  },
+  {
+    q: "Los routers Cisco designan el router ID según tres criterios por preferencias. ¿Cuáles son?",
+    opts: ["El router elige la dirección activa más alta de cualquiera de sus interfaces","El router elige la dirección IPv4 activa más baja de cualquiera de sus interfaces físicas","El router elige la dirección IPv4 más alta de cualquiera de las interfaces de loopback configuradas","El router ID se configura explícitamente con el comando Router(config-router)# router-id a.b.c.d","El router elige la dirección IPv4 activa más alta de cualquiera de sus interfaces físicas"],
+    correct: [2,3,4],
+    multi: true,
+    multiCount: 3,
+    explain: "Orden de preferencia: 1) router-id configurado manualmente, 2) IP más alta de una loopback, 3) IP activa más alta de una interfaz física."
+  },
+  {
+    q: "¿Qué tipo de protocolo es OSPF?",
+    opts: ["Protocolo de routing vector distancia","Protocolo de routing sin vector distancia","Protocolo de routing vector ruta","Protocolo de routing de estado de enlace"],
+    correct: [3],
+    multi: false,
+    explain: "OSPF es un protocolo de routing de estado de enlace (link-state): cada router construye un mapa completo de la topología."
+  },
+  {
+    q: "¿Cuál es el proceso por el cual el tráfico atraviesa una interfaz configurada con una ACL, el router compara la información del paquete con cada ACE en orden secuencial?",
+    opts: ["Filtrado de sentencias","Filtrado de paquetes","Filtrado de dispositivos","Filtrado de MAC"],
+    correct: [1],
+    multi: false,
+    explain: "El filtrado de paquetes (packet filtering) compara cada paquete con las ACE de la ACL en orden secuencial hasta encontrar coincidencia."
+  },
+  {
+    q: 'Con DLP (Data Loss Prevention / Pérdida de Datos), ¿qué cuatro consecuencias podemos tener?',
+    opts: ["Costo y esfuerzo significativos para notificar a las partes afectadas y recuperarse de la transgresión","Acciones ilegales que generen multas y sanciones penales","Pérdida de clientes","Pérdida de materiales","Pérdida de la ventaja competitiva","Daño de la marca / pérdida de la reputación","Aumento de clientes"],
+    correct: [0,2,4,5],
+    multi: true,
+    multiCount: 4,
+    explain: "Las cuatro consecuencias: costo/esfuerzo de notificación y recuperación, pérdida de clientes, pérdida de la ventaja competitiva y daño de marca/reputación."
+  },
+  {
+    q: '"Generalmente cifra los archivos de la computadora para que el usuario no pueda acceder a ellos y luego envía un mensaje donde se exige un rescate para suministrar la clave de descifrado." ¿Qué tipo de malware es?',
+    opts: ["Ransomware","Caballo de Troya","Gusano","Virus","Spyware"],
+    correct: [0],
+    multi: false,
+    explain: "El ransomware cifra los archivos y exige un pago (rescate) a cambio de la clave de descifrado."
+  },
+  {
+    q: "¿Cuál es el protocolo utilizado por los agentes de amenazas para los ataques de reconocimiento y análisis?",
+    opts: ["CDP","OSPF","ICMP","LLDP"],
+    correct: [2],
+    multi: false,
+    explain: "ICMP (ping, echo request/reply) se usa para descubrir hosts activos en la red durante la fase de reconocimiento."
+  },
+  {
+    q: "Las opciones de diseño de topología jerárquica con OSPF multiárea pueden ofrecer tres ventajas. ¿Cuáles son dichas ventajas?",
+    opts: ["Tablas de enrutamiento más pequeñas","Menor frecuencia de cálculos de FPS","Menor frecuencia de cálculos de SPF","Tablas de enrutamiento más grandes","Sobrecarga de actualizaciones de estado de enlace reducida"],
+    correct: [0,2,4],
+    multi: true,
+    multiCount: 3,
+    explain: "Las tres ventajas: tablas de enrutamiento más pequeñas, menor frecuencia de cálculos SPF y sobrecarga de actualizaciones de estado de enlace (LSA) reducida. 'FPS' no existe, es un distractor."
+  },
+  {
+    q: "Los routers que ejecutan OSPF intercambian mensajes para transmitir información de routing por medio de cinco tipos de paquetes. ¿Cuáles son dichos paquetes?",
+    opts: ["Paquete de descripción de la base de datos","Paquete de actualización de estado de enlace","Paquete de solicitud de estado de enlace","Paquete de acuse de recibo de un enlace","Paquete de acuse de recibo de estado de enlace","Paquete de actualización","Paquete de saludo","Paquete de saludo y despedida"],
+    correct: [0,1,2,4,6],
+    multi: true,
+    multiCount: 5,
+    explain: "Los 5 paquetes OSPF: Hello (saludo), DBD (descripción de base de datos), LSR (solicitud de estado de enlace), LSU (actualización de estado de enlace) y LSAck (acuse de recibo de estado de enlace)."
+  },
+  {
+    q: 'El valor "process-id" representa un número entre x y xxxxx y lo selecciona el administrador de la red. ¿Cuál es este valor?',
+    opts: ["0 - 65535","1 - 65535","1 - 65565","1 - 63535"],
+    correct: [1],
+    multi: false,
+    explain: "El process-id de OSPF va de 1 a 65535 y es localmente significativo (no tiene que coincidir entre routers)."
+  },
+  {
+    q: "Los mensajes OSPF se utilizan para crear y mantener tres tablas. ¿Cuáles son estas tablas?",
+    opts: ["Base de datos de reenvío","Tabla de topología","Tabla de adyacencia","Tabla de enrutamiento","Tabla de vecinos"],
+    correct: [1,3,4],
+    multi: true,
+    multiCount: 3,
+    explain: "Las tres tablas OSPF: tabla de vecinos (neighbor), tabla de topología (LSDB) y tabla de enrutamiento (routing table)."
+  },
+  {
+    q: "¿Qué tipo de protocolo es OSPF?",
+    opts: ["OSPF es un protocolo de routing vector distancia","OSPF es un protocolo de routing sin clase","OSPF es un protocolo de routing EGP","OSPF es un protocolo de routing con clase","OSPF es un protocolo de routing híbrido"],
+    correct: [1],
+    multi: false,
+    explain: "OSPF es un protocolo de routing sin clase (classless): soporta VLSM y CIDR al incluir la máscara en sus actualizaciones."
+  },
+  {
+    q: "¿Cuáles son los cuatro elementos de las comunicaciones seguras?",
+    opts: ["Confidencialidad de los datos","No repudio de los datos (Data Non-Repudiation)","Integridad de los datos","Entorno no seguro","Usuarios personalizados","Autenticación de Origen","Autenticación de Destino","Securización"],
+    correct: [0,1,2,5],
+    multi: true,
+    multiCount: 4,
+    explain: "Los cuatro elementos: confidencialidad de los datos, integridad de los datos, autenticación de origen y no repudio (non-repudiation)."
+  }
+];
+
+let answered = {};
+let multiSelections = {};
+
+function render() {
+  const container = document.getElementById('quizContainer');
+  let html = '';
+  questions.forEach(function(q, i) {
+    var num = i + 1;
+    var isMulti = q.multi;
+    var typeLabel = isMulti ? 'Selecciona ' + q.multiCount : 'Selecciona 1';
+    html += '<div class="question-card" id="card-' + i + '">';
+    html += '<div class="question-number">Pregunta ' + num + ' <span class="question-type">' + typeLabel + '</span></div>';
+    html += '<div class="question-text">' + q.q + '</div>';
+    html += '<div class="options" id="opts-' + i + '">';
+    q.opts.forEach(function(opt, j) {
+      var circleClass = isMulti ? 'check-box' : 'radio-circle';
+      var dotClass = isMulti ? 'check-mark' : 'radio-dot';
+      var dotContent = isMulti ? '✓' : '';
+      html += '<div class="option" id="opt-' + i + '-' + j + '" onclick="selectOption(' + i + ',' + j + ')">';
+      html += '<div class="' + circleClass + '"><div class="' + dotClass + '">' + dotContent + '</div></div>';
+      html += '<span>' + opt + '</span></div>';
+    });
+    html += '</div>';
+    if (isMulti) {
+      html += '<button class="confirm-btn" id="confirm-' + i + '" onclick="confirmMulti(' + i + ')">Confirmar respuesta</button>';
+    }
+    html += '<div class="feedback" id="fb-' + i + '">';
+    html += '<div class="feedback-label" id="fb-label-' + i + '"></div>';
+    html += '<div class="feedback-text" id="fb-text-' + i + '"></div>';
+    html += '</div></div>';
+  });
+  html += '<div class="results-section" id="results">';
+  html += '<div class="results-title">Resultado del test</div>';
+  html += '<div class="results-score-big" id="scoreValue"></div>';
+  html += '<div class="results-fraction" id="scoreFraction"></div>';
+  html += '<div class="results-label" id="scoreLabel"></div>';
+  html += '<div class="results-detail" id="scoreDetail"></div>';
+  html += '<button class="reset-btn" onclick="showModal()">↻ Repetir Test</button>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function selectOption(qi, oi) {
+  if (answered[qi]) return;
+  var q = questions[qi];
+  if (q.multi) {
+    if (!multiSelections[qi]) multiSelections[qi] = new Set();
+    var sel = multiSelections[qi];
+    if (sel.has(oi)) sel.delete(oi); else sel.add(oi);
+    q.opts.forEach(function(_, j) {
+      var el = document.getElementById('opt-' + qi + '-' + j);
+      if (sel.has(j)) el.classList.add('selected'); else el.classList.remove('selected');
+    });
+    var btn = document.getElementById('confirm-' + qi);
+    if (sel.size > 0) btn.classList.add('show'); else btn.classList.remove('show');
+  } else {
+    q.opts.forEach(function(_, j) {
+      document.getElementById('opt-' + qi + '-' + j).classList.remove('selected');
+    });
+    document.getElementById('opt-' + qi + '-' + oi).classList.add('selected');
+    checkAnswer(qi, [oi]);
+  }
+}
+
+function confirmMulti(qi) {
+  if (answered[qi]) return;
+  var sel = Array.from(multiSelections[qi] || []);
+  if (sel.length === 0) return;
+  checkAnswer(qi, sel);
+  document.getElementById('confirm-' + qi).style.display = 'none';
+}
+
+function checkAnswer(qi, selected) {
+  answered[qi] = true;
+  var q = questions[qi];
+  var correct = q.correct;
+  var isCorrect = selected.length === correct.length && selected.every(function(s) { return correct.indexOf(s) !== -1; });
+  q.opts.forEach(function(_, j) {
+    var el = document.getElementById('opt-' + qi + '-' + j);
+    el.classList.add('disabled');
+    el.classList.remove('selected');
+    if (correct.indexOf(j) !== -1) {
+      el.classList.add('option-correct');
+    } else if (selected.indexOf(j) !== -1) {
+      el.classList.add('option-incorrect');
+    }
+  });
+  var card = document.getElementById('card-' + qi);
+  card.classList.add(isCorrect ? 'answered-correct' : 'answered-incorrect');
+  var fb = document.getElementById('fb-' + qi);
+  fb.classList.add('show');
+  fb.classList.add(isCorrect ? 'correct' : 'incorrect');
+  document.getElementById('fb-label-' + qi).textContent = isCorrect ? '✓ ¡Correcto!' : '✗ ¡Incorrecto!';
+  document.getElementById('fb-text-' + qi).textContent = q.explain;
+  updateProgress();
+}
+
+function updateProgress() {
+  var total = questions.length;
+  var done = Object.keys(answered).length;
+  var pct = (done / total) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = done + ' / ' + total + ' respondidas';
+  if (done === total) setTimeout(showResults, 400);
+}
+
+function showResults() {
+  var total = questions.length;
+  var correctCount = 0;
+  questions.forEach(function(q, i) {
+    var card = document.getElementById('card-' + i);
+    if (card.classList.contains('answered-correct')) correctCount++;
+  });
+  var pct = Math.round((correctCount / total) * 100);
+  var pass = pct >= 70;
+  var results = document.getElementById('results');
+  results.classList.add('show');
+  var scoreEl = document.getElementById('scoreValue');
+  scoreEl.textContent = pct + '%';
+  scoreEl.className = 'results-score-big ' + (pass ? 'pass' : 'fail');
+  document.getElementById('scoreFraction').textContent = correctCount + ' / ' + total + ' correctas';
+  var labelEl = document.getElementById('scoreLabel');
+  labelEl.textContent = pass ? 'APROBADO' : 'SUSPENSO';
+  labelEl.className = 'results-label ' + (pass ? 'pass' : 'fail');
+  var detailEl = document.getElementById('scoreDetail');
+  detailEl.textContent = pass ? '¡Buen trabajo! Superas el mínimo del 70%.' : 'Necesitas un 70% para aprobar. ¡Sigue practicando!';
+  setTimeout(function() { results.scrollIntoView({ behavior: 'smooth' }); }, 300);
+}
+
+function showModal() { document.getElementById('modalOverlay').classList.add('show'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+function doReset() {
+  closeModal();
+  answered = {};
+  multiSelections = {};
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+render();
+</script>
+</body>
+</html>
